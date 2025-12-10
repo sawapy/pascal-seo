@@ -1,0 +1,5 @@
+{
+  "name": "Pascal SEO Trend Analyzer",
+  "description": "A specialized dashboard to visualize weekly SEO ranking fluctuations from Supabase data, featuring domain-restricted Google login and Gemini-powered trend analysis.",
+  "requestFramePermissions": []
+}
