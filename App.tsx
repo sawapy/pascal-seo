@@ -13,28 +13,15 @@ const App: React.FC = () => {
   useEffect(() => {
     let mounted = true;
 
-    // Set up auth state listener first
-    const { data: authListener } = authService.onAuthStateChange((user) => {
-      console.log('🔄 Auth listener triggered:', user ? 'User found' : 'No user');
-      if (mounted) {
-        setUser(user);
-        setAuthError(null);
-        setLoading(false); // Set loading to false when auth state is determined
-      }
-    });
-
-    // Initialize authentication
+    // Initialize authentication with PKCE flow
     const initAuth = async () => {
       try {
-        console.log('🚀 Initializing auth...');
+        console.log('🚀 Initializing auth with PKCE...');
         
-        // Wait a moment for Supabase to process URL fragments and trigger auth state changes
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // If still no user after state changes, manually check
+        // Check for existing session (PKCE handles URL params automatically)
         const currentUser = await authService.getCurrentUser();
-        console.log('🔄 Manual auth check result:', currentUser ? 'User found' : 'No user');
-        if (mounted && !user && currentUser) {
+        console.log('🔄 Auth init result:', currentUser ? 'User found' : 'No user');
+        if (mounted) {
           setUser(currentUser);
         }
       } catch (error) {
@@ -48,6 +35,15 @@ const App: React.FC = () => {
         }
       }
     };
+
+    // Set up auth state listener
+    const { data: authListener } = authService.onAuthStateChange((user) => {
+      console.log('🔄 Auth state changed:', user ? 'User found' : 'No user');
+      if (mounted) {
+        setUser(user);
+        setAuthError(null);
+      }
+    });
 
     initAuth();
 
