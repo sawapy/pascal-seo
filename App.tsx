@@ -13,12 +13,15 @@ const App: React.FC = () => {
   useEffect(() => {
     let mounted = true;
 
-    // Initialize authentication with PKCE flow
+    // Initialize authentication
     const initAuth = async () => {
       try {
-        console.log('🚀 Initializing auth with PKCE...');
+        console.log('🚀 Initializing auth...');
         
-        // Check for existing session (PKCE handles URL params automatically)
+        // Wait for Supabase to process URL fragments/params
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Check for existing session
         const currentUser = await authService.getCurrentUser();
         console.log('🔄 Auth init result:', currentUser ? 'User found' : 'No user');
         if (mounted) {

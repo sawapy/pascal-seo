@@ -9,8 +9,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    // PKCE flow for better OAuth handling in SPAs
-    flowType: 'pkce',
+    // Try implicit flow first if PKCE is not enabled in Supabase dashboard
+    flowType: 'implicit',
     autoRefreshToken: true,
     detectSessionInUrl: true,
     persistSession: true,
