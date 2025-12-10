@@ -55,27 +55,33 @@ export const authService = {
   // Get current user session
   async getCurrentUser(): Promise<UserProfile | null> {
     try {
+      console.log('🔍 Getting current user...');
       const { data: { user }, error } = await supabase.auth.getUser();
       
       if (error) {
-        console.error('Get user error:', error);
+        console.error('❌ Get user error:', error);
         return null;
       }
 
+      console.log('👤 User data:', user ? 'Found user' : 'No user', user?.email);
+
       if (!user || !user.email) {
+        console.log('❌ No user or email found');
         return null;
       }
 
       // Check domain restriction
       if (!isAllowedDomain(user.email)) {
-        console.warn('User domain not allowed:', user.email);
+        console.warn('❌ User domain not allowed:', user.email);
         await this.signOut(); // Automatically sign out unauthorized users
         throw new Error('このドメインのメールアドレスは許可されていません');
       }
 
-      return convertToUserProfile(user as AuthUser);
+      const userProfile = convertToUserProfile(user as AuthUser);
+      console.log('✅ User profile created:', userProfile.name, userProfile.email);
+      return userProfile;
     } catch (error) {
-      console.error('Get current user error:', error);
+      console.error('❌ Get current user error:', error);
       return null;
     }
   },
@@ -91,29 +97,34 @@ export const authService = {
   // Listen to auth state changes
   onAuthStateChange(callback: (user: UserProfile | null) => void) {
     return supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email);
+      console.log('🔄 Auth state changed:', event, session?.user?.email);
 
       if (event === 'SIGNED_OUT') {
+        console.log('👋 User signed out');
         callback(null);
         return;
       }
 
       if (session?.user) {
         try {
+          console.log('🔐 Processing session for:', session.user.email);
+          
           // Check domain restriction
           if (!session.user.email || !isAllowedDomain(session.user.email)) {
-            console.warn('Unauthorized domain:', session.user.email);
+            console.warn('❌ Unauthorized domain:', session.user.email);
             await this.signOut();
             throw new Error('このドメインのメールアドレスは許可されていません');
           }
 
           const userProfile = convertToUserProfile(session.user as AuthUser);
+          console.log('✅ Auth state: User authenticated:', userProfile.name);
           callback(userProfile);
         } catch (error) {
-          console.error('Auth state change error:', error);
+          console.error('❌ Auth state change error:', error);
           callback(null);
         }
       } else {
+        console.log('❌ No session/user found');
         callback(null);
       }
     });

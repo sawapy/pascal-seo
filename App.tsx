@@ -16,13 +16,15 @@ const App: React.FC = () => {
     // Initialize authentication
     const initAuth = async () => {
       try {
+        console.log('🚀 Initializing auth...');
         // Check for existing session
         const currentUser = await authService.getCurrentUser();
+        console.log('🔄 Auth init result:', currentUser ? 'User found' : 'No user');
         if (mounted) {
           setUser(currentUser);
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        console.error('❌ Auth initialization error:', error);
         if (mounted) {
           setAuthError(error instanceof Error ? error.message : 'Authentication failed');
         }
