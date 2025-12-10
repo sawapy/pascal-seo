@@ -42,9 +42,10 @@ export const authService = {
           hd: 'goodfellows.co.jp' // Restrict to goodfellows.co.jp domain (Frontend UX)
         },
         // Strict URL matching for PKCE flow (must match exactly with Supabase settings)
+        // Using slash-less URLs as suggested by Gemini
         redirectTo: window.location.hostname === 'localhost' 
-          ? `${window.location.origin}/`
-          : 'https://trend-analyzer.netlify.app/'
+          ? window.location.origin
+          : 'https://trend-analyzer.netlify.app'
       }
     });
 
