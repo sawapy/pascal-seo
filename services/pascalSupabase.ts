@@ -285,43 +285,34 @@ export async function importPascalCsv(
 export async function getPascalKeywordsForDisplay() {
   const keywords = await pascalKeywordService.getAll();
   
-  // Get latest rankings for all keywords
+  // Get latest rankings for all keywords using a more efficient approach
   const keywordIds = keywords.map(k => k.id);
-  const { data: latestRankings, error } = await supabase
-    .from('pascal_daily_rankings')
-    .select('pascal_keyword_id, rank, date')
-    .in('pascal_keyword_id', keywordIds)
-    .order('date', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching latest rankings:', error);
-  }
-
-  // Create a map of keyword ID to latest rank
+  
+  // Get the latest ranking for each keyword with a single query per keyword
   const latestRankMap = new Map<string, number>();
-  if (latestRankings) {
-    // Group by keyword and take the latest date's rank
-    const ranksByKeyword = new Map<string, Array<{rank: number, date: string}>>();
+  
+  for (const keywordId of keywordIds) {
+    const { data: latestRanking, error } = await supabase
+      .from('pascal_daily_rankings')
+      .select('rank, date')
+      .eq('pascal_keyword_id', keywordId)
+      .order('date', { ascending: false })
+      .limit(1)
+      .single();
+      
+    if (error && error.code !== 'PGRST116') {
+      console.error(`Error fetching latest ranking for keyword ${keywordId}:`, error);
+    }
     
-    latestRankings.forEach(ranking => {
-      if (!ranksByKeyword.has(ranking.pascal_keyword_id)) {
-        ranksByKeyword.set(ranking.pascal_keyword_id, []);
-      }
-      ranksByKeyword.get(ranking.pascal_keyword_id)!.push({
-        rank: ranking.rank,
-        date: ranking.date
-      });
-    });
-
-    // Get the latest rank for each keyword
-    ranksByKeyword.forEach((rankings, keywordId) => {
-      // Sort by date desc and take the first (latest)
-      const sortedRankings = rankings.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      if (sortedRankings.length > 0) {
-        latestRankMap.set(keywordId, sortedRankings[0].rank);
-      }
-    });
+    if (latestRanking) {
+      latestRankMap.set(keywordId, latestRanking.rank);
+      console.log(`Keyword ${keywordId}: latest rank ${latestRanking.rank} on ${latestRanking.date}`);
+    } else {
+      console.log(`Keyword ${keywordId}: no ranking data found`);
+    }
   }
+  
+  console.log('Latest rank map size:', latestRankMap.size);
 
   return keywords.map(k => ({
     id: k.id,

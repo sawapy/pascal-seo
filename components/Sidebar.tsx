@@ -83,9 +83,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <span className={`text-xs px-2 py-1 rounded-full font-bold ${
                       keyword.currentRank && keyword.currentRank <= 3 ? 'bg-yellow-100 text-yellow-800' :
                       keyword.currentRank && keyword.currentRank <= 10 ? 'bg-green-100 text-green-800' :
-                      'bg-gray-100 text-gray-600'
+                      keyword.currentRank ? 'bg-gray-100 text-gray-600' :
+                      'bg-red-100 text-red-600'
                     }`}>
-                      {keyword.currentRank}位
+                      {keyword.currentRank ? `${keyword.currentRank}位` : '圏外'}
                     </span>
                   </div>
                   {keyword.volume && (
