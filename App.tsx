@@ -13,14 +13,28 @@ const App: React.FC = () => {
   useEffect(() => {
     let mounted = true;
 
+    // Set up auth state listener first
+    const { data: authListener } = authService.onAuthStateChange((user) => {
+      console.log('🔄 Auth listener triggered:', user ? 'User found' : 'No user');
+      if (mounted) {
+        setUser(user);
+        setAuthError(null);
+        setLoading(false); // Set loading to false when auth state is determined
+      }
+    });
+
     // Initialize authentication
     const initAuth = async () => {
       try {
         console.log('🚀 Initializing auth...');
-        // Check for existing session
+        
+        // Wait a moment for Supabase to process URL fragments and trigger auth state changes
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // If still no user after state changes, manually check
         const currentUser = await authService.getCurrentUser();
-        console.log('🔄 Auth init result:', currentUser ? 'User found' : 'No user');
-        if (mounted) {
+        console.log('🔄 Manual auth check result:', currentUser ? 'User found' : 'No user');
+        if (mounted && !user && currentUser) {
           setUser(currentUser);
         }
       } catch (error) {
@@ -34,14 +48,6 @@ const App: React.FC = () => {
         }
       }
     };
-
-    // Set up auth state listener
-    const { data: authListener } = authService.onAuthStateChange((user) => {
-      if (mounted) {
-        setUser(user);
-        setAuthError(null);
-      }
-    });
 
     initAuth();
 
