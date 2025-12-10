@@ -41,7 +41,10 @@ export const authService = {
           prompt: 'consent',
           hd: 'goodfellows.co.jp' // Restrict to goodfellows.co.jp domain (Frontend UX)
         },
-        redirectTo: `${window.location.origin}` // Redirect back to app root
+        // Strict URL matching for PKCE flow (must match exactly with Supabase settings)
+        redirectTo: window.location.hostname === 'localhost' 
+          ? `${window.location.origin}/`
+          : 'https://trend-analyzer.netlify.app/'
       }
     });
 
