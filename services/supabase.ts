@@ -14,6 +14,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
     persistSession: true,
+    
+    // 【重要】ブラウザのローカルストレージを強制的に使用する設定
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
   },
 });
 

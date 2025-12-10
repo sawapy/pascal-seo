@@ -9,7 +9,7 @@ if (!rootElement) {
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
-  <React.StrictMode>
+  // <React.StrictMode>  // Temporarily disabled to debug PKCE authentication
     <App />
-  </React.StrictMode>
+  // </React.StrictMode>
 );
