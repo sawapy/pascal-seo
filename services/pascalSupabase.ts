@@ -333,6 +333,8 @@ export async function getPascalKeywordsForDisplay() {
     console.log('❌ Error fetching rankings:', error);
   }
   
+
+
   return keywords.map(k => ({
     id: k.id,
     pascal_id: k.pascal_id,

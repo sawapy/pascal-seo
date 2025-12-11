@@ -102,7 +102,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         )}
                         {keyword.deviceType && (
                           <span className="px-1 py-0.5 bg-gray-100 rounded text-xs">
-                            {keyword.deviceType === 'mobile' ? 'SP' : 'PC'}
+                            {keyword.deviceType}
                           </span>
                         )}
                         {keyword.rankType && (
