@@ -28,10 +28,15 @@ export interface PascalDailyRanking {
 // Pascal keyword service
 export const pascalKeywordService = {
   async getAll() {
+    console.log('🔍 Attempting to fetch from pascal_keywords table...');
     const { data, error } = await supabase
       .from('pascal_keywords')
       .select('*')
       .order('keyword_text');
+    
+    if (error) {
+      console.error('❌ Error fetching pascal_keywords:', error);
+    }
     
     if (error) throw error;
     return data as PascalKeyword[];
@@ -284,36 +289,50 @@ export async function importPascalCsv(
 // Get keywords in format expected by existing components with current rank
 export async function getPascalKeywordsForDisplay() {
   const keywords = await pascalKeywordService.getAll();
+  console.log('📊 Keywords found:', keywords.length, keywords);
   
-  // Get latest rankings for all keywords using a more efficient approach
+  // Try to get latest rankings (with retry logic)
+  console.log('🔍 Fetching latest rankings from pascal_daily_rankings...');
   const keywordIds = keywords.map(k => k.id);
-  
-  // Get the latest ranking for each keyword with a single query per keyword
   const latestRankMap = new Map<string, number>();
   
-  for (const keywordId of keywordIds) {
-    const { data: latestRanking, error } = await supabase
+  // Use a more efficient batch approach
+  try {
+    const { data: allRankings, error } = await supabase
       .from('pascal_daily_rankings')
-      .select('rank, date')
-      .eq('pascal_keyword_id', keywordId)
-      .order('date', { ascending: false })
-      .limit(1)
-      .single();
-      
-    if (error && error.code !== 'PGRST116') {
-      console.error(`Error fetching latest ranking for keyword ${keywordId}:`, error);
-    }
+      .select('pascal_keyword_id, rank, date')
+      .in('pascal_keyword_id', keywordIds)
+      .order('date', { ascending: false });
     
-    if (latestRanking) {
-      latestRankMap.set(keywordId, latestRanking.rank);
-      console.log(`Keyword ${keywordId}: latest rank ${latestRanking.rank} on ${latestRanking.date}`);
+    if (!error && allRankings) {
+      // Group by keyword and get latest rank
+      const rankingsByKeyword = new Map<string, any[]>();
+      
+      allRankings.forEach(ranking => {
+        const keywordId = ranking.pascal_keyword_id;
+        if (!rankingsByKeyword.has(keywordId)) {
+          rankingsByKeyword.set(keywordId, []);
+        }
+        rankingsByKeyword.get(keywordId)!.push(ranking);
+      });
+      
+      // Get latest rank for each keyword
+      rankingsByKeyword.forEach((rankings, keywordId) => {
+        if (rankings.length > 0) {
+          // Sort by date desc and get first (latest)
+          rankings.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          latestRankMap.set(keywordId, rankings[0].rank);
+        }
+      });
+      
+      console.log(`✅ Successfully fetched rankings for ${latestRankMap.size} keywords`);
     } else {
-      console.log(`Keyword ${keywordId}: no ranking data found`);
+      console.log('❌ Failed to fetch rankings:', error?.message);
     }
+  } catch (error) {
+    console.log('❌ Error fetching rankings:', error);
   }
   
-  console.log('Latest rank map size:', latestRankMap.size);
-
   return keywords.map(k => ({
     id: k.id,
     pascal_id: k.pascal_id,

@@ -105,32 +105,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   }, []);
 
   // Fetch Keywords on Mount
-  const fetchKeywords = useCallback(async (selectFirst = false) => {
+  const fetchKeywords = useCallback(async () => {
     setIsLoadingKeywords(true);
     try {
       const data = await getPascalKeywordsForDisplay();
       setKeywords(data);
-      
-      // If URL doesn't have pascalId and we should select first
-      if (selectFirst && data.length > 0 && !pascalId && !selectedKeywordId) {
-        const firstKeyword = data[0];
-        setSelectedKeywordId(firstKeyword.id);
-        // Update URL to include Pascal ID
-        navigate(`/keyword/${firstKeyword.pascal_id}`, { replace: true });
-      } else if (selectFirst && data.length > 0 && !pascalId) {
-        // If we want to force select first, or just ensure selection if current selection is invalid
-         if (!selectedKeywordId || !data.find(k => k.id === selectedKeywordId)) {
-           const firstKeyword = data[0];
-           setSelectedKeywordId(firstKeyword.id);
-           navigate(`/keyword/${firstKeyword.pascal_id}`, { replace: true });
-         }
-      }
     } catch (error) {
       console.error("Failed to fetch keywords", error);
     } finally {
       setIsLoadingKeywords(false);
     }
-  }, [selectedKeywordId, pascalId, navigate]);
+  }, []);
 
   // Handle Pascal ID from URL parameter
   useEffect(() => {
@@ -152,8 +137,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   }, [pascalId]);
 
   useEffect(() => {
-    fetchKeywords(true);
-  }, []);
+    fetchKeywords();
+  }, [fetchKeywords]);
+
+  // Auto-select first keyword when needed
+  useEffect(() => {
+    if (keywords.length > 0 && !pascalId && !selectedKeywordId) {
+      const firstKeyword = keywords[0];
+      setSelectedKeywordId(firstKeyword.id);
+      navigate(`/keyword/${firstKeyword.pascal_id}`, { replace: true });
+    }
+  }, [keywords, pascalId, selectedKeywordId, navigate]);
 
   // Fetch Keyword Details when selection changes
   useEffect(() => {
