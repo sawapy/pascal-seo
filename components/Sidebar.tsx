@@ -19,7 +19,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [selectedSite, setSelectedSite] = React.useState<string>('all');
-  const [sortBy, setSortBy] = React.useState<'default' | 'volume-desc' | 'volume-asc'>('default');
+  const [sortBy, setSortBy] = React.useState<'volume-desc' | 'volume-asc'>('volume-desc');
 
   // Get unique site names for filter dropdown
   const siteNames = React.useMemo(() => {
@@ -45,7 +45,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     } else if (sortBy === 'volume-asc') {
       filtered.sort((a, b) => (a.volume || 0) - (b.volume || 0));
     }
-    // 'default' keeps original order
 
     return filtered;
   }, [keywords, searchTerm, selectedSite, sortBy]);
@@ -104,12 +103,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </label>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'default' | 'volume-desc' | 'volume-asc')}
+              onChange={(e) => setSortBy(e.target.value as 'volume-desc' | 'volume-asc')}
               className="block w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
             >
-              <option value="default">デフォルト順</option>
-              <option value="volume-desc">検索ボリューム順（高い順）</option>
-              <option value="volume-asc">検索ボリューム順（低い順）</option>
+              <option value="volume-desc">検索ボリューム順（多い順）</option>
+              <option value="volume-asc">検索ボリューム順（少ない順）</option>
             </select>
           </div>
         </div>
