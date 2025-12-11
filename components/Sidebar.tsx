@@ -18,10 +18,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isLoading 
 }) => {
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [selectedSite, setSelectedSite] = React.useState<string>('all');
+  const [sortBy, setSortBy] = React.useState<'default' | 'volume-desc' | 'volume-asc'>('default');
 
-  const filteredKeywords = keywords.filter(k => 
-    k.term.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Get unique site names for filter dropdown
+  const siteNames = React.useMemo(() => {
+    const sites = [...new Set(keywords.map(k => k.siteName).filter(Boolean))];
+    return sites.sort();
+  }, [keywords]);
+
+  // Filter and sort keywords
+  const filteredAndSortedKeywords = React.useMemo(() => {
+    let filtered = keywords.filter(k => {
+      // Text search filter
+      const matchesSearch = k.term.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Site name filter
+      const matchesSite = selectedSite === 'all' || k.siteName === selectedSite;
+      
+      return matchesSearch && matchesSite;
+    });
+
+    // Apply sorting
+    if (sortBy === 'volume-desc') {
+      filtered.sort((a, b) => (b.volume || 0) - (a.volume || 0));
+    } else if (sortBy === 'volume-asc') {
+      filtered.sort((a, b) => (a.volume || 0) - (b.volume || 0));
+    }
+    // 'default' keeps original order
+
+    return filtered;
+  }, [keywords, searchTerm, selectedSite, sortBy]);
 
   return (
     <div className="w-full md:w-80 bg-white border-r border-gray-200 flex flex-col h-full">
@@ -38,17 +65,53 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <i className="fa-solid fa-file-csv mr-1"></i> インポート
           </button>
         </div>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <i className="fa-solid fa-search text-gray-400 text-sm"></i>
+        <div className="space-y-3">
+          {/* Search input */}
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i className="fa-solid fa-search text-gray-400 text-sm"></i>
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              placeholder="キーワードを検索..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-          <input
-            type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            placeholder="キーワードを検索..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+
+          {/* Site filter */}
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              サイト絞り込み
+            </label>
+            <select
+              value={selectedSite}
+              onChange={(e) => setSelectedSite(e.target.value)}
+              className="block w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="all">すべてのサイト</option>
+              {siteNames.map(site => (
+                <option key={site} value={site}>{site}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Sort options */}
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              並び替え
+            </label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as 'default' | 'volume-desc' | 'volume-asc')}
+              className="block w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="default">デフォルト順</option>
+              <option value="volume-desc">検索ボリューム順（高い順）</option>
+              <option value="volume-asc">検索ボリューム順（低い順）</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -66,7 +129,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         ) : (
           <ul className="divide-y divide-gray-100">
-            {filteredKeywords.map(keyword => (
+            {filteredAndSortedKeywords.map(keyword => (
               <li key={keyword.id}>
                 <button
                   onClick={() => onSelectKeyword(keyword.id)}
@@ -121,7 +184,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </button>
               </li>
             ))}
-            {filteredKeywords.length === 0 && (
+            {filteredAndSortedKeywords.length === 0 && (
               <div className="flex flex-col items-center justify-center p-8 text-center">
                 <div className="text-gray-300 mb-2 text-2xl">
                   <i className="fa-solid fa-folder-open"></i>
